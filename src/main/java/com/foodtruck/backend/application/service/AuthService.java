@@ -32,6 +32,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
+        // TODO: Convertir username y email a lowercase antes de guardar
+        // TODO: Manejar excepciones específicas (DataIntegrityViolationException para
+        // duplicados)
         if (repo.existsByUsername(req.username()) || repo.existsByEmail(req.email())) {
             throw new IllegalArgumentException("El usuario o email ya existe");
         }
@@ -53,6 +56,8 @@ public class AuthService {
     }
 
     public AuthResponse login(AuthRequest req) {
+        // TODO: Normalizar username a lowercase para búsqueda
+        // TODO: Manejar UsernameNotFoundException y BadCredentialsException
         System.out.println("Attempting to authenticate user: " + req.username());
         var user = repo.findByUsername(req.username()).orElseThrow(() -> {
             System.out.println("User not found: " + req.username());
