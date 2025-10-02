@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: foodtruck.backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/foodtruck_movil1
+    username: postgres
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+security:
+  jwt:
+    secret: "9ac3a0a3413b0fe08cfbf879f5066aa24f4c038d"
+    expiration: 3600000 # 1h
+    refresh-expiration: 604800000 # 7 días
+
+app:
+  cors:
+    origins: "http://localhost:8100"
+
+server:
+  port: 8081
