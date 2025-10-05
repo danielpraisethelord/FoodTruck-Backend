@@ -4,7 +4,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import com.foodtruck.backend.domain.repository.UserRepository;
 import com.foodtruck.backend.infrastructure.security.JwtService;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,49 +35,51 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        // TODO: Convertir username y email a lowercase antes de guardar
-        // TODO: Manejar excepciones específicas (DataIntegrityViolationException para
-        // duplicados)
-        if (repo.existsByUsername(req.username()) || repo.existsByEmail(req.email())) {
+        try {
+            String username = req.username().trim().toLowerCase();
+            String email = req.email().trim().toLowerCase();
+
+            if (repo.existsByUsername(username) || repo.existsByEmail(email)) {
+                throw new IllegalArgumentException("El usuario o email ya existe");
+            }
+
+            Set<Role> roles = (req.roles() == null || req.roles().isEmpty())
+                    ? Set.of(Role.ROLE_USER)
+                    : req.roles().stream()
+                            .map(role -> Role.valueOf(role.toString()))
+                            .collect(Collectors.toSet());
+
+            var user = User.builder()
+                    .username(username)
+                    .email(email)
+                    .password(encoder.encode(req.password()))
+                    .roles(roles)
+                    .build();
+
+            repo.save(user);
+
+            return buildTokens(user, roles);
+
+        } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("El usuario o email ya existe");
         }
-
-        Set<Role> roles = (req.roles() == null || req.roles().isEmpty())
-                ? Set.of(Role.ROLE_USER)
-                : req.roles().stream().map(role -> Role.valueOf(role.toString()))
-                        .collect(java.util.stream.Collectors.toSet());
-
-        var user = User.builder()
-                .username(req.username())
-                .email(req.email())
-                .password(encoder.encode(req.password()))
-                .roles(roles)
-                .build();
-
-        repo.save(user);
-
-        return buildTokens(user, roles);
     }
 
     public AuthResponse login(AuthRequest req) {
-        // TODO: Normalizar username a lowercase para búsqueda
-        // TODO: Manejar UsernameNotFoundException y BadCredentialsException
-        System.out.println("Attempting to authenticate user: " + req.username());
-        var user = repo.findByUsername(req.username()).orElseThrow(() -> {
-            System.out.println("User not found: " + req.username());
-            return new RuntimeException("Usuario no encontrado");
-        });
+        String username = req.username().trim().toLowerCase();
 
-        System.out.println("User found: " + user.getUsername());
-        System.out.println("Password in DB: " + user.getPassword());
+        try {
+            var user = repo.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-        boolean passwordMatch = encoder.matches(req.password(), user.getPassword());
-        System.out.println("Password coincide: " + passwordMatch);
+            var auth = new UsernamePasswordAuthenticationToken(username, req.password());
+            authManager.authenticate(auth);
 
-        var auth = new UsernamePasswordAuthenticationToken(req.username(), req.password());
-        authManager.authenticate(auth);
+            return buildTokens(user, user.getRoles());
 
-        return buildTokens(user, user.getRoles());
+        } catch (UsernameNotFoundException | BadCredentialsException ex) {
+            throw new BadCredentialsException("Credenciales inválidas");
+        }
     }
 
     public AuthResponse refresh(RefreshRequest req) {
