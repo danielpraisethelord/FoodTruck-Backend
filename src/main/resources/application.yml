@@ -30,3 +30,7 @@ scalar:
   enabled: true
   url: http://localhost:8081/v3/api-docs
   path: /docs
+  showSidebar: true
+  hideModels: false
+  theme: default
+  layout: modern
