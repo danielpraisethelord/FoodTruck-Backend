@@ -41,7 +41,8 @@ public class AuthService {
 
         Set<Role> roles = (req.roles() == null || req.roles().isEmpty())
                 ? Set.of(Role.ROLE_USER)
-                : req.roles().stream().map(Role::valueOf).collect(java.util.stream.Collectors.toSet());
+                : req.roles().stream().map(role -> Role.valueOf(role.toString()))
+                        .collect(java.util.stream.Collectors.toSet());
 
         var user = User.builder()
                 .username(req.username())
