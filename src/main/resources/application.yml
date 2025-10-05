@@ -25,3 +25,8 @@ app:
 
 server:
   port: 8081
+
+scalar:
+  enabled: true
+  url: http://localhost:8081/v3/api-docs
+  path: /docs
