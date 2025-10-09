@@ -33,6 +33,7 @@ public class AuthService {
     private final JwtService jwt;
     @Value("${security.jwt.expiration}")
     private long expiration;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
@@ -104,5 +105,17 @@ public class AuthService {
         String refresh = jwt.generateRefreshToken(user.getUsername());
 
         return new AuthResponse(access, refresh, "Bearer", expiration);
+    }
+
+    public void logout(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        if (token != null && jwt.isTokenValid(token, jwt.extractUsername(token))) {
+            tokenBlacklistService.blacklistToken(token);
+        } else {
+            throw new IllegalArgumentException("Token inválido o ya expirado");
+        }
     }
 }

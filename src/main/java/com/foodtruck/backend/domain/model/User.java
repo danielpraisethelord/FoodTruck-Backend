@@ -38,7 +38,8 @@ public class User implements UserDetails {
     @Column(length = 255)
     private String avatar;
 
-    @Column(nullable = false)
+    // TODO: Cambiar a false
+    @Column(name = "register_date", nullable = true)
     private LocalDateTime registerDate;
 
     @ElementCollection(fetch = FetchType.EAGER)

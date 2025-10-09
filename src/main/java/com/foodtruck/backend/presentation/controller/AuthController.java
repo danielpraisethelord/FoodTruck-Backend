@@ -2,13 +2,21 @@ package com.foodtruck.backend.presentation.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 import com.foodtruck.backend.application.dto.AuthDtos.AuthRequest;
 import com.foodtruck.backend.application.dto.AuthDtos.AuthResponse;
+import com.foodtruck.backend.application.dto.AuthDtos.LogoutResponse;
 import com.foodtruck.backend.application.dto.AuthDtos.RefreshRequest;
 import com.foodtruck.backend.application.dto.AuthDtos.RegisterRequest;
+import com.foodtruck.backend.application.dto.AuthDtos.RoleVerificationResponse;
 import com.foodtruck.backend.application.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -98,5 +106,42 @@ public class AuthController {
   })
   public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest req) {
     return ResponseEntity.ok(authService.refresh(req));
+  }
+
+  @PostMapping("/logout")
+  @Operation(summary = "Cerrar sesión", description = "Invalida el token JWT actual agregándolo a una lista negra.", responses = {
+      @ApiResponse(responseCode = "200", description = "Sesión cerrada correctamente", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Logout exitoso", value = """
+          {
+            "message": "Sesión cerrada correctamente",
+            "timestamp": "2025-10-09T15:30:45.123"
+          }
+          """))),
+      @ApiResponse(responseCode = "401", description = "Token inválido o no proporcionado")
+  })
+  public ResponseEntity<LogoutResponse> logout(@RequestHeader("Authorization") String authHeader) {
+    authService.logout(authHeader);
+    return ResponseEntity.ok(new LogoutResponse("Sesión cerrada correctamente"));
+  }
+
+  @GetMapping("/verify-roles")
+  @Operation(summary = "Verificar roles del usuario", description = "Obtiene los roles del usuario autenticado basado en el token JWT.", responses = {
+      @ApiResponse(responseCode = "200", description = "Roles obtenidos correctamente", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Roles del usuario", value = """
+          {
+            "username": "daniel",
+            "roles": ["ROLE_USER", "ROLE_ADMIN"],
+            "timestamp": "2025-10-09T15:30:45.123"
+          }
+          """))),
+      @ApiResponse(responseCode = "401", description = "Token inválido o no proporcionado")
+  })
+  public ResponseEntity<RoleVerificationResponse> verifyRoles(Authentication authentication) {
+    String username = authentication.getName();
+    Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+
+    Set<String> roles = authorities.stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.toSet());
+
+    return ResponseEntity.ok(new RoleVerificationResponse(username, roles));
   }
 }

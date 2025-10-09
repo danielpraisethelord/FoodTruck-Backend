@@ -2,6 +2,8 @@ package com.foodtruck.backend.application.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
+
+import java.time.LocalDateTime;
 import java.util.Set;
 import com.foodtruck.backend.domain.model.Role;
 
@@ -50,5 +52,22 @@ public class AuthDtos {
                         @Schema(description = "Tipo de token devuelto. Generalmente 'Bearer'.", example = "Bearer") String tokenType,
 
                         @Schema(description = "Tiempo de expiración del token de acceso en milisegundos.", example = "3600000") long expiresInMs) {
+        }
+
+        public record LogoutResponse(
+                        @Schema(description = "Mensaje que confirma el cierre de sesión.", example = "Logout successful") String message,
+                        @Schema(description = "Marca de tiempo del cierre de sesión.", example = "2023-03-15T12:34:56") LocalDateTime timestamp) {
+                public LogoutResponse(String message) {
+                        this(message, LocalDateTime.now());
+                }
+        }
+
+        public record RoleVerificationResponse(
+                        @Schema(description = "Nombre de usuario verificado.", example = "daniel123") String username,
+                        @Schema(description = "Conjunto de roles asignados al usuario.", example = "[\"ROLE_USER\", \"ROLE_ADMIN\"]") Set<String> roles,
+                        @Schema(description = "Marca de tiempo de la verificación.", example = "2023-03-15T12:34:56") LocalDateTime timestamp) {
+                public RoleVerificationResponse(String username, Set<String> roles) {
+                        this(username, roles, LocalDateTime.now());
+                }
         }
 }
