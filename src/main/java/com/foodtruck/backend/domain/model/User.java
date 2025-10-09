@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,6 +31,15 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(length = 100)
+    private String name;
+
+    @Column(length = 255)
+    private String avatar;
+
+    @Column(nullable = false)
+    private LocalDateTime registerDate;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)

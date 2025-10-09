@@ -24,8 +24,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Autenticación", description = "Endpoints relacionados con el registro, inicio de sesión y actualización de tokens JWT.")
 public class AuthController {
 
-  // TODO: Implementar validaciones personalizadas por cada campo en los DTOs
-
   private final AuthService authService;
 
   @PostMapping("/register")

@@ -19,6 +19,7 @@ import com.foodtruck.backend.domain.model.User;
 import com.foodtruck.backend.domain.repository.UserRepository;
 import com.foodtruck.backend.infrastructure.security.JwtService;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,8 @@ public class AuthService {
         try {
             String username = req.username().trim().toLowerCase();
             String email = req.email().trim().toLowerCase();
+            String name = req.name().trim();
+            LocalDateTime registerDate = LocalDateTime.now();
 
             if (repo.existsByUsername(username) || repo.existsByEmail(email)) {
                 throw new IllegalArgumentException("El usuario o email ya existe");
@@ -54,6 +57,8 @@ public class AuthService {
                     .email(email)
                     .password(encoder.encode(req.password()))
                     .roles(roles)
+                    .name(name)
+                    .registerDate(registerDate)
                     .build();
 
             repo.save(user);
