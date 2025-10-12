@@ -70,6 +70,10 @@ public class UserProfileService {
             throw new IllegalArgumentException("La nueva contraseña debe ser diferente a la actual");
         }
 
+        if (!request.newPassword().equals(request.confirmNewPassword())) {
+            throw new UserExceptions.PasswordMismatchException("Las contraseñas no coinciden");
+        }
+
         user.setPassword(encoder.encode(request.newPassword()));
         userRepository.save(user);
 

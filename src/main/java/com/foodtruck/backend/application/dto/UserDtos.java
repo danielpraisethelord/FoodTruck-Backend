@@ -28,9 +28,7 @@ public class UserDtos {
 
             @NotBlank(message = "La confirmación de contraseña es requerida") String confirmNewPassword) {
         public ChangePasswordRequest {
-            if (!newPassword.equals(confirmNewPassword)) {
-                throw new IllegalArgumentException("Las contraseñas no coinciden");
-            }
+
         }
     }
 
