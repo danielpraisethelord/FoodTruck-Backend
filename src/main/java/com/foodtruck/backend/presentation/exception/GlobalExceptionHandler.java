@@ -1,5 +1,6 @@
 package com.foodtruck.backend.presentation.exception;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import io.jsonwebtoken.JwtException;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -107,4 +109,78 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
+
+    @ExceptionHandler(FileExceptions.EmptyFileException.class)
+    public ResponseEntity<Map<String, Object>> handleEmptyFile(FileExceptions.EmptyFileException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Archivo vacío",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(FileExceptions.InvalidFileFormatException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidFileFormat(FileExceptions.InvalidFileFormatException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Formato de archivo inválido",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(FileExceptions.FileSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleFileSizeExceeded(FileExceptions.FileSizeExceededException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Archivo demasiado grande",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
+    }
+
+    @ExceptionHandler(FileExceptions.UserNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleUserNotFound(FileExceptions.UserNotFoundException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Usuario no encontrado",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Archivo demasiado grande",
+                "message", "El archivo excede el tamaño máximo permitido de 5MB",
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<Map<String, Object>> handleIOException(IOException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Error procesando archivo",
+                "message", "No se pudo procesar el archivo. Intente nuevamente",
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    @ExceptionHandler(UserExceptions.InvalidCurrentPasswordException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidCurrentPassword(
+            UserExceptions.InvalidCurrentPasswordException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Contraseña actual incorrecta",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(UserExceptions.PasswordMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handlePasswordMismatch(UserExceptions.PasswordMismatchException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "Contraseñas no coinciden",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
 }
