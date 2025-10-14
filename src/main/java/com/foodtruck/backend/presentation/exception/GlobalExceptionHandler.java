@@ -183,4 +183,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(CategoryExceptions.CategoryNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleCategoryNotFound(CategoryExceptions.CategoryNotFoundException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "CATEGORY_NOT_FOUND",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(CategoryExceptions.CategoryAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleCategoryAlreadyExists(
+            CategoryExceptions.CategoryAlreadyExistsException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "CATEGORY_ALREADY_EXISTS",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(CategoryExceptions.CategoryHasProductsException.class)
+    public ResponseEntity<Map<String, Object>> handleCategoryHasProducts(
+            CategoryExceptions.CategoryHasProductsException ex) {
+        Map<String, Object> errorResponse = Map.of(
+                "error", "CATEGORY_HAS_PRODUCTS",
+                "message", ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
 }
