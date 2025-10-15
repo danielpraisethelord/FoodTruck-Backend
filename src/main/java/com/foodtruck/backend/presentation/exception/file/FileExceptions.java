@@ -1,4 +1,4 @@
-package com.foodtruck.backend.presentation.exception;
+package com.foodtruck.backend.presentation.exception.file;
 
 public class FileExceptions {
 

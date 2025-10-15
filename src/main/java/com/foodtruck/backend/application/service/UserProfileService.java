@@ -11,8 +11,8 @@ import com.foodtruck.backend.application.dto.UserDtos.ChangePasswordRequest;
 import com.foodtruck.backend.application.dto.UserDtos.ChangePasswordResponse;
 import com.foodtruck.backend.application.dto.UserDtos.UpdateAvatarResponse;
 import com.foodtruck.backend.domain.repository.UserRepository;
-import com.foodtruck.backend.presentation.exception.UserExceptions;
-import com.foodtruck.backend.presentation.exception.FileExceptions;
+import com.foodtruck.backend.presentation.exception.file.FileExceptions;
+import com.foodtruck.backend.presentation.exception.user.UserExceptions;
 
 import lombok.RequiredArgsConstructor;
 

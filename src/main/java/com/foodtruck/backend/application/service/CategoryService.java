@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.foodtruck.backend.application.dto.CategoryDtos.*;
 import com.foodtruck.backend.domain.model.Category;
 import com.foodtruck.backend.domain.repository.CategoryRepository;
-import com.foodtruck.backend.presentation.exception.CategoryExceptions.*;
+import com.foodtruck.backend.presentation.exception.category.CategoryExceptions.*;
 
 import lombok.RequiredArgsConstructor;
 

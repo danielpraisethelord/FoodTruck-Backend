@@ -1,4 +1,4 @@
-package com.foodtruck.backend.presentation.exception;
+package com.foodtruck.backend.presentation.exception.user;
 
 public class UserExceptions {
 
