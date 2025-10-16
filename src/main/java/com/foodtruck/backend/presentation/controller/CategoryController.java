@@ -51,6 +51,7 @@ public class CategoryController {
                     }
                     """)))
     })
+    // TODO: Implementar paginación para cuando haya muchas categorías
     public ResponseEntity<List<CategorySimpleResponse>> getAllCategories() {
         List<CategorySimpleResponse> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
@@ -99,6 +100,7 @@ public class CategoryController {
                     }
                     """)))
     })
+    // TODO: Implementar paginación para resultados de búsqueda de categorías
     public ResponseEntity<List<CategorySimpleResponse>> searchCategories(
             @Parameter(description = "Texto a buscar en el nombre de las categorías", example = "bebida") @RequestParam String name) {
         List<CategorySimpleResponse> categories = categoryService.searchCategoriesByName(name);
@@ -260,5 +262,44 @@ public class CategoryController {
             @Parameter(description = "ID de la categoría", example = "1") @PathVariable Long id) {
         Long count = categoryService.countProductsByCategory(id);
         return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/{id}/detailed")
+    @Operation(summary = "Obtener categoría con productos detallados", description = "Obtiene una categoría específica con información completa de todos sus productos", responses = {
+            @ApiResponse(responseCode = "200", description = "Categoría con productos detallados obtenida exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoryDetailedResponse.class), examples = @ExampleObject(name = "Categoría con productos detallados", value = """
+                    {
+                        "id": 1,
+                        "name": "Bebidas",
+                        "products": [
+                            {
+                                "id": 1,
+                                "name": "Coca Cola",
+                                "description": null,
+                                "price": 2.50,
+                                "imageUrl": "http://localhost:8081/public/images/coca-cola.jpg",
+                                "active": true
+                            },
+                            {
+                                "id": 2,
+                                "name": "Pepsi",
+                                "description": null,
+                                "price": 2.30,
+                                "imageUrl": "http://localhost:8081/public/images/pepsi.jpg",
+                                "active": true
+                            }
+                        ]
+                    }
+                    """))),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Categoría no encontrada", value = """
+                    {
+                        "error": "CATEGORY_NOT_FOUND",
+                        "message": "Categoría con ID 999 no encontrada"
+                    }
+                    """)))
+    })
+    public ResponseEntity<CategoryDetailedResponse> getCategoryDetailed(
+            @Parameter(description = "ID de la categoría", example = "1") @PathVariable Long id) {
+        CategoryDetailedResponse category = categoryService.getCategoryDetailed(id);
+        return ResponseEntity.ok(category);
     }
 }

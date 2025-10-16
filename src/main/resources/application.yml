@@ -10,7 +10,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        format_sql: true
+        "[format_sql]": true
     show-sql: false
   servlet:
     multipart:
@@ -29,6 +29,8 @@ app:
   upload:
     dir:
       avatar: "static/avatars"
+      product: "static/products"
+    max-file-size: 5242880
   base:
     url: "http://localhost:8081"
 

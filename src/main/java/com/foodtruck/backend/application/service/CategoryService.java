@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.foodtruck.backend.application.dto.CategoryDtos.*;
 import com.foodtruck.backend.domain.model.Category;
+import com.foodtruck.backend.domain.model.Product;
 import com.foodtruck.backend.domain.repository.CategoryRepository;
 import com.foodtruck.backend.presentation.exception.category.CategoryExceptions.*;
 
@@ -176,14 +177,17 @@ public class CategoryService {
         return categoryRepository.countProductsByCategoryId(categoryId);
     }
 
-    // TODO: Implementar getCategoryDetailed cuando ProductService esté disponible
-    /*
-     * public CategoryDetailedResponse getCategoryDetailed(Long id) {
-     * Category category = categoryRepository.findByIdWithProducts(id)
-     * .orElseThrow(() -> new CategoryNotFoundException(id));
-     * return mapToCategoryDetailedResponse(category);
-     * }
+    /**
+     * Obtiene una categoría con información detallada de sus productos
+     * 
+     * @param id ID de la categoría
+     * @return categoría con productos detallados
      */
+    public CategoryDetailedResponse getCategoryDetailed(Long id) {
+        Category category = categoryRepository.findByIdWithProducts(id)
+                .orElseThrow(() -> new CategoryNotFoundException(id));
+        return mapToCategoryDetailedResponse(category);
+    }
 
     // Métodos de mapeo
     private CategorySimpleResponse mapToCategorySimpleResponse(Category category) {
@@ -203,31 +207,29 @@ public class CategoryService {
                 productNames);
     }
 
-    // TODO: Implementar mapToCategoryDetailedResponse cuando ProductService esté
-    // disponible
-    /*
-     * private CategoryDetailedResponse mapToCategoryDetailedResponse(Category
-     * category) {
-     * List<ProductSummary> productSummaries = category.getProducts().stream()
-     * .map(this::mapToProductSummary)
-     * .collect(Collectors.toList());
-     * 
-     * return new CategoryDetailedResponse(
-     * category.getId(),
-     * category.getName(),
-     * productSummaries
-     * );
-     * }
-     * 
-     * private ProductSummary mapToProductSummary(Product product) {
-     * return new ProductSummary(
-     * product.getId(),
-     * product.getName(),
-     * product.getDescription(),
-     * product.getPrice(),
-     * product.getImageUrl(),
-     * product.getActive()
-     * );
-     * }
+    /**
+     * Mapea una entidad Category a CategoryDetailedResponse
      */
+    private CategoryDetailedResponse mapToCategoryDetailedResponse(Category category) {
+        List<ProductSummary> productSummaries = category.getProducts().stream()
+                .map(this::mapToProductSummary)
+                .collect(Collectors.toList());
+
+        return new CategoryDetailedResponse(
+                category.getId(),
+                category.getName(),
+                productSummaries);
+    }
+
+    /**
+     * Mapea una entidad Product a ProductSummary
+     */
+    private ProductSummary mapToProductSummary(Product product) {
+        return new ProductSummary(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImage(),
+                product.getActive());
+    }
 }
