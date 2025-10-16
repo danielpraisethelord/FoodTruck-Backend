@@ -34,8 +34,6 @@ public class CategoryDtos {
 
                         @Schema(description = "Nombre del producto", example = "Coca Cola") String name,
 
-                        @Schema(description = "Descripción del producto", example = "Bebida gaseosa refrescante") String description,
-
                         @Schema(description = "Precio del producto", example = "2.50") BigDecimal price,
 
                         @Schema(description = "URL de la imagen del producto", example = "http://localhost:8081/public/product/product123.jpg") String imageUrl,
