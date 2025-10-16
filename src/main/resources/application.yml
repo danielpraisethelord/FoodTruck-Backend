@@ -29,6 +29,8 @@ app:
   upload:
     dir:
       avatar: "static/avatars"
+      product: "static/products"
+    max-file-size: 5242880
   base:
     url: "http://localhost:8081"
 
