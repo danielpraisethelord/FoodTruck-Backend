@@ -1,163 +1,246 @@
 package com.foodtruck.backend.application.service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Value;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.foodtruck.backend.presentation.exception.product.ProductExceptions.InvalidProductImageException;
 import com.foodtruck.backend.presentation.exception.product.ProductExceptions.ProductImageProcessingException;
 import com.foodtruck.backend.presentation.exception.product.ProductExceptions.ProductImageTooLargeException;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.UUID;
+
 @Service
+@RequiredArgsConstructor
 public class FileStorageService {
 
-    @Value("${app.upload.dir.avatar}")
-    private String uploadDir;
+    private final Storage storage;
+    private final String firebaseBucketName;
 
-    @Value("${app.base.url}")
-    private String baseUrl;
+    // ------------------------------------------------------------
+    // MÉTODOS PÚBLICOS
+    // ------------------------------------------------------------
 
-    @Value("${app.upload.dir.product}")
-    private String productUploadDir;
-
-    @Value("${app.upload.max-file-size}")
-    private long maxFileSize;
-
-    public String saveAvatar(MultipartFile file, String username) throws IOException {
-
-        Path uploadPath = Paths.get("src/main/resources/" + uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = getFileExtension(originalFilename);
-        String newFilename = username + "_" + UUID.randomUUID().toString() + fileExtension;
-
-        Path filePath = uploadPath.resolve(newFilename);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        return baseUrl + "/avatars/" + newFilename;
-    }
-
-    public void deleteAvatar(String avatarUrl) {
-        if (avatarUrl != null && avatarUrl.startsWith(baseUrl)) {
-            try {
-                String filename = avatarUrl.substring(avatarUrl.lastIndexOf("/") + 1);
-                Path filePath = Paths.get(uploadDir, filename);
-                Files.deleteIfExists(filePath);
-            } catch (Exception e) {
-                System.err.println("Errror deleting file: " + e.getMessage());
-            }
-        }
-    }
-
-    private String getFileExtension(String filename) {
-        if (filename == null || filename.lastIndexOf(".") == -1) {
-            return ".jpg";
-        }
-        return filename.substring(filename.lastIndexOf("."));
-    }
-
-    public boolean isValidImageFile(MultipartFile file) {
-        String contentType = file.getContentType();
-        return contentType != null && contentType.startsWith("image/");
+    /**
+     * Sube y optimiza una imagen de avatar al bucket de Firebase.
+     *
+     * @param file     Imagen recibida desde el cliente.
+     * @param username Nombre de usuario (usado para nombrar el archivo).
+     * @return URL pública estable de la imagen subida.
+     * @throws InvalidProductImageException    Si el archivo no es una imagen
+     *                                         válida.
+     * @throws ProductImageTooLargeException   Si el archivo excede el tamaño máximo
+     *                                         permitido.
+     * @throws ProductImageProcessingException Si ocurre un error al procesar o
+     *                                         subir la imagen.
+     */
+    public String saveAvatar(MultipartFile file, String username) {
+        return uploadToFirebase(file, "avatars", username);
     }
 
     /**
-     * Guarda una imagen de producto en el sistema de archivos
-     * 
-     * @param file        Archivo de imagen a guardar
-     * @param productName Nombre del producto (para generar nombre único)
-     * @return URL pública de la imagen guardada
-     * @throws InvalidProductImageException    si el archivo no es una imagen válida
-     * @throws ProductImageTooLargeException   si el archivo excede el tamaño máximo
-     * @throws ProductImageProcessingException si ocurre un error al procesar la
-     *                                         imagen
+     * Sube y optimiza una imagen de producto al bucket de Firebase.
+     *
+     * @param file        Imagen del producto.
+     * @param productName Nombre del producto (usado para nombrar el archivo).
+     * @return URL pública estable de la imagen subida.
+     * @throws InvalidProductImageException    Si el archivo no es una imagen
+     *                                         válida.
+     * @throws ProductImageTooLargeException   Si el archivo excede el tamaño máximo
+     *                                         permitido.
+     * @throws ProductImageProcessingException Si ocurre un error al procesar o
+     *                                         subir la imagen.
      */
     public String saveProductImage(MultipartFile file, String productName) {
-        validateProductImage(file);
+        return uploadToFirebase(file, "products", productName);
+    }
+
+    /**
+     * Elimina una imagen del bucket de Firebase Storage a partir de su URL pública.
+     *
+     * @param imageUrl URL pública de la imagen a eliminar.
+     */
+    public void deleteFile(String imageUrl) {
+        try {
+            if (imageUrl == null || imageUrl.isBlank())
+                return;
+
+            String filename = imageUrl.substring(imageUrl.indexOf("/o/") + 3, imageUrl.indexOf("?alt=media"));
+            filename = java.net.URLDecoder.decode(filename, StandardCharsets.UTF_8);
+
+            BlobId blobId = BlobId.of(firebaseBucketName, filename);
+            storage.delete(blobId);
+
+        } catch (Exception e) {
+            System.err.println("Error eliminando archivo: " + e.getMessage());
+        }
+    }
+
+    // ------------------------------------------------------------
+    // MÉTODOS PRIVADOS
+    // ------------------------------------------------------------
+
+    /**
+     * Sube un archivo al bucket de Firebase tras validarlo y optimizarlo.
+     *
+     * @param file     Archivo de imagen recibido.
+     * @param folder   Carpeta de destino en el bucket ("avatars" o "products").
+     * @param baseName Nombre base para el archivo (usuario o producto).
+     * @return URL pública generada por Firebase Storage.
+     */
+    private String uploadToFirebase(MultipartFile file, String folder, String baseName) {
+        validateImage(file);
 
         try {
-            Path uploadPath = Paths.get("src/main/resources/" + productUploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
+            byte[] optimizedBytes = optimizeImage(file.getBytes(), file.getContentType(), folder);
 
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = getFileExtension(originalFilename);
-            String sanitizedProductName = sanitizeFilename(productName);
-            String newFilename = sanitizedProductName + "_" + UUID.randomUUID().toString() + fileExtension;
+            String sanitizedBaseName = sanitizeFilename(baseName);
+            String extension = getFileExtension(file.getOriginalFilename());
+            String newFilename = folder + "/" + sanitizedBaseName + "_" + UUID.randomUUID() + extension;
 
-            Path filePath = uploadPath.resolve(newFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            BlobId blobId = BlobId.of(firebaseBucketName, newFilename);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                    .setContentType(file.getContentType())
+                    .build();
 
-            return baseUrl + "/products/" + newFilename;
+            storage.create(blobInfo, optimizedBytes);
+
+            return String.format(
+                    "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
+                    firebaseBucketName,
+                    URLEncoder.encode(newFilename, StandardCharsets.UTF_8));
 
         } catch (IOException e) {
-            throw new ProductImageProcessingException("Error al guardar la imagen del producto", e);
+            throw new ProductImageProcessingException("Error al subir la imagen a Firebase", e);
         }
     }
 
     /**
-     * Elimina una imagen de producto del sistema de archivos
-     * 
-     * @param imageUrl URL de la imagen a eliminar
+     * Valida que el archivo sea una imagen válida y que cumpla con el tamaño máximo
+     * permitido.
+     *
+     * @param file Archivo a validar.
+     * @throws InvalidProductImageException  Si el tipo MIME no corresponde a una
+     *                                       imagen.
+     * @throws ProductImageTooLargeException Si el tamaño excede los 5 MB.
      */
-    public void deleteProductImage(String imageUrl) {
-        if (imageUrl != null && imageUrl.startsWith(baseUrl)) {
-            try {
-                String filename = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
-                Path filePath = Paths.get("src/main/resources/" + productUploadDir, filename);
-                Files.deleteIfExists(filePath);
-            } catch (Exception e) {
-                System.err.println("Error eliminando imagen del producto: " + e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Valida que el archivo sea una imagen válida para productos
-     * 
-     * @param file Archivo a validar
-     * @throws InvalidProductImageException  si el archivo no es válido
-     * @throws ProductImageTooLargeException si el archivo es muy grande
-     */
-    private void validateProductImage(MultipartFile file) {
+    private void validateImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new InvalidProductImageException("No se proporcionó ningún archivo de imagen");
         }
 
-        if (!isValidImageFile(file)) {
-            throw new InvalidProductImageException("El archivo debe ser una imagen válida (JPG, PNG, GIF, etc.)");
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new InvalidProductImageException("El archivo debe ser una imagen válida (JPG, PNG, WEBP, etc.)");
         }
 
-        if (file.getSize() > maxFileSize) {
-            throw new ProductImageTooLargeException(maxFileSize);
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new ProductImageTooLargeException(5 * 1024 * 1024);
         }
     }
 
     /**
-     * Sanitiza el nombre del archivo para evitar caracteres problemáticos
-     * 
-     * @param filename Nombre a sanitizar
-     * @return Nombre sanitizado
+     * Redimensiona y comprime una imagen para optimizar su almacenamiento en
+     * Firebase.
+     *
+     * @param imageBytes  Bytes originales de la imagen.
+     * @param contentType Tipo MIME del archivo.
+     * @param folder      Carpeta de destino (para determinar dimensiones máximas).
+     * @return Bytes de la imagen optimizada.
+     * @throws IOException Si ocurre un error de lectura o escritura.
      */
-    private String sanitizeFilename(String filename) {
-        if (filename == null) {
-            return "product";
-        }
+    private byte[] optimizeImage(byte[] imageBytes, String contentType, String folder) throws IOException {
+        int maxWidth = folder.equals("avatars") ? 256 : 800;
+        int maxHeight = folder.equals("avatars") ? 256 : 800;
 
-        return filename.toLowerCase()
-                .replaceAll("[^a-z0-9\\-_]", "_")
-                .replaceAll("_{2,}", "_")
-                .substring(0, Math.min(filename.length(), 50));
+        try (InputStream in = new ByteArrayInputStream(imageBytes);
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            BufferedImage original = ImageIO.read(in);
+            if (original == null)
+                return imageBytes;
+
+            int width = original.getWidth();
+            int height = original.getHeight();
+
+            if (width > maxWidth || height > maxHeight) {
+                float scale = Math.min((float) maxWidth / width, (float) maxHeight / height);
+                int newW = Math.round(width * scale);
+                int newH = Math.round(height * scale);
+
+                Image scaled = original.getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+                BufferedImage resized = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2d = resized.createGraphics();
+                g2d.drawImage(scaled, 0, 0, null);
+                g2d.dispose();
+                original = resized;
+            }
+
+            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+            if (!writers.hasNext())
+                return imageBytes;
+            ImageWriter writer = writers.next();
+
+            try (ImageOutputStream ios = ImageIO.createImageOutputStream(out)) {
+                writer.setOutput(ios);
+                ImageWriteParam param = writer.getDefaultWriteParam();
+                if (param.canWriteCompressed()) {
+                    param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                    param.setCompressionQuality(0.7f);
+                }
+                writer.write(null, new IIOImage(original, null, null), param);
+            } finally {
+                writer.dispose();
+            }
+
+            return out.toByteArray();
+        }
     }
+
+    /**
+     * Obtiene la extensión de un archivo a partir de su nombre.
+     *
+     * @param filename Nombre del archivo original.
+     * @return Extensión del archivo (por defecto ".jpg").
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || !filename.contains("."))
+            return ".jpg";
+        return filename.substring(filename.lastIndexOf("."));
+    }
+
+    /**
+     * Normaliza un nombre para que sea seguro como nombre de archivo.
+     *
+     * @param name Nombre base a sanitizar.
+     * @return Nombre seguro y en minúsculas.
+     */
+    private String sanitizeFilename(String name) {
+        if (name == null || name.isBlank())
+            return "image";
+
+        String sanitized = name.toLowerCase()
+                .trim()
+                .replaceAll("[^a-z0-9\\-_]", "_")
+                .replaceAll("_{2,}", "_");
+
+        if (sanitized.isBlank())
+            sanitized = "image";
+
+        return sanitized.substring(0, Math.min(sanitized.length(), 50));
+    }
+
 }

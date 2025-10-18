@@ -234,21 +234,21 @@ public class ProductService {
     }
 
     /**
-     * Actualiza la imagen de un producto
-     * 
-     * @param id      Identificador del producto
-     * @param request Nueva imagen del producto
-     * @return Respuesta con información de la actualización
-     * @throws ProductNotFoundException     si el producto no existe
-     * @throws InvalidProductImageException si la imagen no es válida
+     * Actualiza la imagen de un producto.
+     *
+     * @param id      Identificador del producto.
+     * @param request Nueva imagen del producto.
+     * @return Respuesta con la información de la actualización.
+     * @throws ProductNotFoundException     si el producto no existe.
+     * @throws InvalidProductImageException si la imagen no es válida.
      */
+    @Transactional
     public ProductImageUpdateResponse updateProductImage(Long id, ProductImageUpdateRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
-        // Eliminar imagen anterior si existe
         if (product.getImage() != null && !product.getImage().isEmpty()) {
-            fileStorageService.deleteProductImage(product.getImage());
+            fileStorageService.deleteFile(product.getImage());
         }
 
         String imageUrl = fileStorageService.saveProductImage(request.image(), product.getName());
@@ -281,21 +281,17 @@ public class ProductService {
         return mapToProductResponse(updatedProduct);
     }
 
-    /**
-     * Elimina un producto del sistema
-     * 
-     * @param id Identificador del producto a eliminar
-     * @throws ProductNotFoundException si el producto no existe
-     */
+    @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
-        // Eliminar imagen si existe
+        // ✅ Elimina la imagen del bucket si existe
         if (product.getImage() != null && !product.getImage().isEmpty()) {
-            fileStorageService.deleteProductImage(product.getImage());
+            fileStorageService.deleteFile(product.getImage());
         }
 
+        // ✅ Elimina el producto de la base de datos
         productRepository.delete(product);
     }
 

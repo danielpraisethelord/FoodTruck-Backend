@@ -45,3 +45,7 @@ scalar:
   hideModels: false
   theme: default
   layout: modern
+
+firebase:
+  bucket-name: foodtruck-filestorage.firebasestorage.app
+  service-account: classpath:firebase/foodtruck-firebase.json
