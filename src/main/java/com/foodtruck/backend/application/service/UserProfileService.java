@@ -27,23 +27,15 @@ public class UserProfileService {
     @Transactional
     public UpdateAvatarResponse updateAvatar(String username, MultipartFile file) throws IOException {
 
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             throw new FileExceptions.EmptyFileException("El archivo no puede estar vacío");
-        }
-
-        if (!fileStorageService.isValidImageFile(file)) {
-            throw new FileExceptions.InvalidFileFormatException("El archivo debe ser una imagen válida");
-        }
-
-        if (file.getSize() > 5 * 1024 * 1024) {
-            throw new FileExceptions.FileSizeExceededException("El archivo no puede exceder los 5MB");
         }
 
         var user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new FileExceptions.UserNotFoundException("Usuario no encontrado"));
 
         if (user.getAvatar() != null) {
-            fileStorageService.deleteAvatar(user.getAvatar());
+            fileStorageService.deleteFile(user.getAvatar());
         }
 
         String avatarUrl = fileStorageService.saveAvatar(file, username);
@@ -54,7 +46,6 @@ public class UserProfileService {
                 "Avatar actualizado correctamente",
                 avatarUrl,
                 username);
-
     }
 
     @Transactional
