@@ -160,4 +160,47 @@ public class UserProfileController {
     UserDtos.ChangePasswordResponse response = userProfileService.changePassword(username, request);
     return ResponseEntity.ok(response);
   }
+
+  @GetMapping
+  @Operation(summary = "Obtener perfil de usuario", description = """
+      Obtiene la información del perfil del usuario autenticado.
+
+      **Autenticación requerida:** Este endpoint requiere un token JWT válido en el header Authorization.
+
+      **Formato del header:**
+      ```
+      Authorization: Bearer <token-jwt>
+      ```
+      """, security = @SecurityRequirement(name = "bearerAuth"), responses = {
+      @ApiResponse(responseCode = "200", description = "Información del usuario obtenida correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDtos.UserProfileResponse.class), examples = @ExampleObject(name = "Éxito", value = """
+          {
+            "id": 1,
+            "username": "daniel",
+            "email": "daniel@example.com",
+            "name": "Daniel Santiago",
+            "avatarUrl": "http://localhost:8081/public/avatars/daniel_12345.jpg",
+            "registerDate": "2023-03-15T12:34:56.789",
+            "roles": ["USER"]
+          }
+          """))),
+      @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Usuario inexistente", value = """
+          {
+            "error": "Usuario no encontrado",
+            "message": "Usuario no encontrado",
+            "timestamp": "2025-10-09T18:30:45.123"
+          }
+          """))),
+      @ApiResponse(responseCode = "401", description = "No autorizado", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Sin autenticación", value = """
+          {
+            "error": "Unauthorized",
+            "message": "Token JWT requerido",
+            "timestamp": "2025-10-09T18:30:45.123"
+          }
+          """)))
+  })
+  public ResponseEntity<UserDtos.UserProfileResponse> getUserProfile(Authentication authentication) {
+    String username = authentication.getName();
+    UserDtos.UserProfileResponse response = userProfileService.getUserProfile(username);
+    return ResponseEntity.ok(response);
+  }
 }

@@ -1,6 +1,8 @@
 package com.foodtruck.backend.application.service;
 
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.foodtruck.backend.application.dto.UserDtos.ChangePasswordRequest;
 import com.foodtruck.backend.application.dto.UserDtos.ChangePasswordResponse;
 import com.foodtruck.backend.application.dto.UserDtos.UpdateAvatarResponse;
+import com.foodtruck.backend.application.dto.UserDtos.UserProfileResponse;
 import com.foodtruck.backend.domain.repository.UserRepository;
 import com.foodtruck.backend.presentation.exception.file.FileExceptions;
 import com.foodtruck.backend.presentation.exception.user.UserExceptions;
@@ -69,5 +72,24 @@ public class UserProfileService {
         userRepository.save(user);
 
         return new ChangePasswordResponse("Contraseña cambiada correctamente", username);
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getUserProfile(String username) {
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new FileExceptions.UserNotFoundException("Usuario no encontrado"));
+
+        Set<String> roleNames = user.getRoles().stream()
+                .map(Enum::name)
+                .collect(Collectors.toSet());
+
+        return new UserProfileResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getName(),
+                user.getAvatar(),
+                user.getRegisterDate(),
+                roleNames);
     }
 }

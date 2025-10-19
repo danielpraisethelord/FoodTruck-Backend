@@ -1,6 +1,7 @@
 package com.foodtruck.backend.application.dto;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -39,5 +40,16 @@ public class UserDtos {
         public ChangePasswordResponse(String message, String username) {
             this(message, username, LocalDateTime.now());
         }
+    }
+
+    @Schema(description = "Información del perfil del usuario autenticado.")
+    public record UserProfileResponse(
+            @Schema(description = "ID único del usuario.", example = "1") Long id,
+            @Schema(description = "Nombre de usuario.", example = "user123") String username,
+            @Schema(description = "Correo electrónico del usuario.", example = "usuario@example.com") String email,
+            @Schema(description = "Nombre completo del usuario.", example = "Juan Pérez") String name,
+            @Schema(description = "URL del avatar del usuario.", example = "http://localhost:8081/public/avatars/user123.jpg") String avatarUrl,
+            @Schema(description = "Fecha de registro del usuario.", example = "2023-03-15T12:34:56") LocalDateTime registerDate,
+            @Schema(description = "Roles del usuario.", example = "[\"USER\"]") Set<String> roles) {
     }
 }
