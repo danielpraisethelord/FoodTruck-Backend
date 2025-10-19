@@ -2,9 +2,9 @@ spring:
   application:
     name: foodtruck.backend
   datasource:
-    url: jdbc:postgresql://localhost:5432/foodtruck_movil1
-    username: postgres
-    password: root
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/foodtruck}
+    username: ${DB_USERNAME:defaultuser}
+    password: ${DB_PASSWORD:defaultpass}
   jpa:
     hibernate:
       ddl-auto: update
@@ -19,27 +19,27 @@ spring:
 
 security:
   jwt:
-    secret: "9ac3a0a3413b0fe08cfbf879f5066aa24f4c038d"
-    expiration: 3600000 # 1h
-    refresh-expiration: 604800000 # 7 días
+    secret: ${JWT_SECRET:defaultsecret}
+    expiration: ${JWT_EXPIRATION:3600000}
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 app:
   cors:
-    origins: "http://localhost:8100"
+    origins: ${CORS_ORIGINS:http://localhost:8100}
   upload:
     dir:
       avatar: "static/avatars"
       product: "static/products"
     max-file-size: 5242880
   base:
-    url: "http://localhost:8081"
+    url: ${BASE_URL:http://localhost:8081}
 
 server:
-  port: 8081
+  port: ${PORT:8081}
 
 scalar:
   enabled: true
-  url: http://localhost:8081/v3/api-docs
+  url: ${BASE_URL:http://localhost:8081}/v3/api-docs
   path: /docs
   showSidebar: true
   hideModels: false
@@ -47,5 +47,5 @@ scalar:
   layout: modern
 
 firebase:
-  bucket-name: foodtruck-filestorage.firebasestorage.app
-  service-account: classpath:firebase/foodtruck-firebase.json
+  bucket-name: ${FIREBASE_BUCKET_NAME:default-bucket}
+  service-account: ${FIREBASE_SERVICE_ACCOUNT:classpath:firebase/foodtruck-firebase.json}
