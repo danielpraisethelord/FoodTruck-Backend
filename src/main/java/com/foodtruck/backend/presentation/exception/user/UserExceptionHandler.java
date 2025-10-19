@@ -2,6 +2,7 @@ package com.foodtruck.backend.presentation.exception.user;
 
 import java.util.Map;
 
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,6 +13,7 @@ import com.foodtruck.backend.presentation.exception.BaseExceptionHandler;
 import io.swagger.v3.oas.annotations.Hidden;
 
 @RestControllerAdvice
+@Order(1)
 @Hidden
 public class UserExceptionHandler extends BaseExceptionHandler {
 

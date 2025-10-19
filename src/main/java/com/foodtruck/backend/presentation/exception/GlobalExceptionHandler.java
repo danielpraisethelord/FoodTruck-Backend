@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import io.jsonwebtoken.JwtException;
 import io.swagger.v3.oas.annotations.Hidden;
 
 @Hidden
+@Order(10)
 @RestControllerAdvice
 public class GlobalExceptionHandler extends BaseExceptionHandler {
 
