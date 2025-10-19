@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  foodtruck-backend:
+    image: devdaniel77/foodtruck.backend:s1
+    container_name: foodtruck-backend
+    env_file:
+      - .env
+    environment:
+      # Database connection (Render PostgreSQL)
+      SPRING_DATASOURCE_URL: ${DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      # JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: false
+
+      # Security JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+
+      # CORS
+      APP_CORS_ORIGINS: ${CORS_ORIGINS}
+
+      # Upload directories
+      APP_UPLOAD_DIR_AVATAR: "/app/static/avatars"
+      APP_UPLOAD_DIR_PRODUCT: "/app/static/products"
+      APP_UPLOAD_MAX_FILE_SIZE: 5242880
+
+      # Base URL and Port
+      APP_BASE_URL: ${BASE_URL}
+      SERVER_PORT: ${PORT}
+
+      # Firebase
+      FIREBASE_BUCKET_NAME: ${FIREBASE_BUCKET_NAME}
+      FIREBASE_SERVICE_ACCOUNT: "file:/app/firebase-credentials.json"
+
+      # Scalar documentation
+      SCALAR_ENABLED: true
+      SCALAR_URL: "${BASE_URL}/v3/api-docs"
+      SCALAR_PATH: "/docs"
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - ./static:/app/static
+      - ./firebase-credentials.json:/app/firebase-credentials.json:ro # SEGURO
+    restart: unless-stopped

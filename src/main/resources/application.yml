@@ -48,4 +48,4 @@ scalar:
 
 firebase:
   bucket-name: ${FIREBASE_BUCKET_NAME:default-bucket}
-  service-account: ${FIREBASE_SERVICE_ACCOUNT:classpath:firebase/foodtruck-firebase.json}
+  service-account: ${FIREBASE_SERVICE_ACCOUNT:file:./firebase-credentials.json}
