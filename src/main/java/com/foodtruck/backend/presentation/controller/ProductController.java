@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.foodtruck.backend.application.dto.ProductDtos;
 import com.foodtruck.backend.application.dto.ProductDtos.*;
 import com.foodtruck.backend.application.service.ProductService;
+import com.foodtruck.backend.infrastructure.validation.ValidImage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -153,7 +155,7 @@ public class ProductController {
                 return ResponseEntity.ok(products);
         }
 
-        @Operation(summary = "Crear un nuevo producto. Requiere rol de ADMIN o EMPLOYEE.", security = @SecurityRequirement(name = "bearerAuth"), description = "Crea un nuevo producto en el sistema", responses = {
+        @Operation(summary = "Crear un nuevo producto. Requiere rol de ADMIN o EMPLOYEE.", security = @SecurityRequirement(name = "bearerAuth"), description = "Crea un nuevo producto en el sistema", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = ProductDtos.ProductCreateFormData.class))), responses = {
                         @ApiResponse(responseCode = "201", description = "Producto creado correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductResponse.class))),
                         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
                         @ApiResponse(responseCode = "409", description = "Ya existe un producto con ese nombre")
@@ -187,7 +189,7 @@ public class ProductController {
                 return ResponseEntity.ok(product);
         }
 
-        @Operation(summary = "Actualizar imagen del producto", description = "Actualiza la imagen de un producto existente", responses = {
+        @Operation(summary = "Actualizar imagen del producto", description = "Actualiza la imagen de un producto existente", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = ProductDtos.ProductImageUpdateRequest.class))), responses = {
                         @ApiResponse(responseCode = "200", description = "Imagen actualizada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProductImageUpdateResponse.class))),
                         @ApiResponse(responseCode = "400", description = "Imagen inválida"),
                         @ApiResponse(responseCode = "404", description = "Producto no encontrado")
@@ -196,10 +198,9 @@ public class ProductController {
         @PreAuthorize(ADMIN_OR_EMPLOYEE)
         public ResponseEntity<ProductImageUpdateResponse> updateProductImage(
                         @Parameter(description = "ID del producto", example = "1", required = true) @PathVariable @NotNull @Positive Long id,
-                        @RequestParam("image") @NotNull MultipartFile image) {
+                        @Valid @ModelAttribute ProductImageUpdateRequest formData) {
 
-                ProductImageUpdateRequest request = new ProductImageUpdateRequest(image);
-                ProductImageUpdateResponse response = productService.updateProductImage(id, request);
+                ProductImageUpdateResponse response = productService.updateProductImage(id, formData);
                 return ResponseEntity.ok(response);
         }
 

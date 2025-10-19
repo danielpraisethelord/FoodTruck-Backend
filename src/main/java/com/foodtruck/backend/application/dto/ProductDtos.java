@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.foodtruck.backend.infrastructure.validation.ValidImage;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -69,7 +71,10 @@ public class ProductDtos {
                 @Schema(description = "Precio del producto", example = "15.99", requiredMode = Schema.RequiredMode.REQUIRED)
                 private BigDecimal price;
 
-                @Schema(description = "Imagen del producto", type = "string", format = "binary")
+                @Schema(description = "Imagen del producto", type = "string", format = "binary", requiredMode = Schema.RequiredMode.REQUIRED, example = "archivo_imagen.jpg")
+                @ValidImage(message = "La imagen del producto no es válida", required = true, maxSize = 5 * 1024
+                                * 1024, allowedTypes = {
+                                                "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" })
                 private MultipartFile image;
 
                 @Schema(description = "Indica si el producto estará activo al crearlo", example = "true", defaultValue = "true")
@@ -138,7 +143,11 @@ public class ProductDtos {
 
         @Schema(description = "Datos para actualizar solo la imagen de un producto")
         public record ProductImageUpdateRequest(
-                        @NotNull(message = "La imagen es obligatoria") @Schema(description = "Nueva imagen del producto", type = "string", format = "binary", requiredMode = Schema.RequiredMode.REQUIRED) MultipartFile image) {
+
+                        @ValidImage(message = "La imagen del producto no es válida", required = true, maxSize = 5 * 1024
+                                        * 1024, allowedTypes = {
+                                                        "image/jpeg", "image/jpg", "image/png", "image/gif",
+                                                        "image/webp" }) @Schema(description = "Nueva imagen del producto", type = "string", format = "binary", requiredMode = Schema.RequiredMode.REQUIRED, example = "nueva_imagen.jpg") MultipartFile image){
         }
 
         @Schema(description = "Respuesta tras actualizar la imagen de un producto")

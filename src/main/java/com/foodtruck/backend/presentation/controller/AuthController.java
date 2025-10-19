@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
@@ -109,14 +110,29 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  @Operation(summary = "Cerrar sesión", description = "Invalida el token JWT actual agregándolo a una lista negra.", responses = {
+  @Operation(summary = "Cerrar sesión", description = """
+      Invalida el token JWT actual agregándolo a una lista negra.
+
+      **Autenticación requerida:** Este endpoint requiere un token JWT válido en el header Authorization.
+
+      **Formato del header:**
+      ```
+      Authorization: Bearer <token-jwt>
+      ```
+      """, security = @SecurityRequirement(name = "bearerAuth"), responses = {
       @ApiResponse(responseCode = "200", description = "Sesión cerrada correctamente", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Logout exitoso", value = """
           {
             "message": "Sesión cerrada correctamente",
             "timestamp": "2025-10-09T15:30:45.123"
           }
           """))),
-      @ApiResponse(responseCode = "401", description = "Token inválido o no proporcionado")
+      @ApiResponse(responseCode = "401", description = "Token JWT inválido, expirado o no proporcionado", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Sin autorización", value = """
+          {
+            "error": "Unauthorized",
+            "message": "Token JWT requerido o inválido",
+            "timestamp": "2025-10-18T15:30:45.123"
+          }
+          """)))
   })
   public ResponseEntity<LogoutResponse> logout(@RequestHeader("Authorization") String authHeader) {
     authService.logout(authHeader);
@@ -124,7 +140,16 @@ public class AuthController {
   }
 
   @GetMapping("/verify-roles")
-  @Operation(summary = "Verificar roles del usuario", description = "Obtiene los roles del usuario autenticado basado en el token JWT.", responses = {
+  @Operation(summary = "Verificar roles del usuario", description = """
+      Obtiene los roles del usuario autenticado basado en el token JWT.
+
+      **Autenticación requerida:** Este endpoint requiere un token JWT válido en el header Authorization.
+
+      **Formato del header:**
+      ```
+      Authorization: Bearer <token-jwt>
+      ```
+      """, security = @SecurityRequirement(name = "bearerAuth"), responses = {
       @ApiResponse(responseCode = "200", description = "Roles obtenidos correctamente", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Roles del usuario", value = """
           {
             "username": "daniel",
@@ -132,7 +157,13 @@ public class AuthController {
             "timestamp": "2025-10-09T15:30:45.123"
           }
           """))),
-      @ApiResponse(responseCode = "401", description = "Token inválido o no proporcionado")
+      @ApiResponse(responseCode = "401", description = "Token JWT inválido, expirado o no proporcionado", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Sin autorización", value = """
+          {
+            "error": "Unauthorized",
+            "message": "Token JWT requerido o inválido",
+            "timestamp": "2025-10-18T15:30:45.123"
+          }
+          """)))
   })
   public ResponseEntity<RoleVerificationResponse> verifyRoles(Authentication authentication) {
     String username = authentication.getName();

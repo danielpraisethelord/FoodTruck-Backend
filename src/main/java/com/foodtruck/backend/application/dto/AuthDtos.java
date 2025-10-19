@@ -22,7 +22,7 @@ public class AuthDtos {
                                         un número y un carácter especial. Longitud mínima de 8 caracteres.
                                         """, example = "Abc123$%", minLength = 8, maxLength = 100, pattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d]).{8,}$") @NotBlank(message = "La contraseña es obligatoria") @Size(min = 8, max = 100, message = "La contraseña debe tener entre 8 y 100 caracteres") @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d]).{8,}$", message = "La contraseña debe contener al menos una letra minúscula, una mayúscula, un número y un carácter especial") String password,
 
-                        @Schema(description = "Nombre completo del usuario.", example = "Daniel Santiago", maxLength = 100) @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres") String name,
+                        @Schema(description = "Nombre completo del usuario.", example = "Daniel Santiago", maxLength = 100) @Size(max = 100, message = "El nombre no puede exceder los 100 caracteres") @NotBlank(message = "El nombre es obligatorio") String name,
 
                         @Schema(description = "Conjunto de roles asignados al nuevo usuario.", example = "[\"ROLE_USER\"]", allowableValues = {
                                         "ROLE_USER", "ROLE_ADMIN", "ROLE_EMPLOYEE" }) Set<Role> roles){

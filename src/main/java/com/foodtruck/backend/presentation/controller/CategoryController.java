@@ -12,6 +12,7 @@ import com.foodtruck.backend.application.service.CategoryService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -83,14 +84,8 @@ public class CategoryController {
     @Operation(summary = "Buscar categorías por nombre", description = "Busca categorías que contengan el texto especificado en su nombre", responses = {
             @ApiResponse(responseCode = "200", description = "Búsqueda realizada exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategorySimpleResponse.class), examples = @ExampleObject(name = "Resultados de búsqueda", value = """
                     [
-                        {
-                            "id": 1,
-                            "name": "Bebidas Frías"
-                        },
-                        {
-                            "id": 3,
-                            "name": "Bebidas Calientes"
-                        }
+                        { "id": 1, "name": "Bebidas Frías" },
+                        { "id": 3, "name": "Bebidas Calientes" }
                     ]
                     """))),
             @ApiResponse(responseCode = "400", description = "Parámetro de búsqueda requerido", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Parámetro faltante", value = """
@@ -102,7 +97,7 @@ public class CategoryController {
     })
     // TODO: Implementar paginación para resultados de búsqueda de categorías
     public ResponseEntity<List<CategorySimpleResponse>> searchCategories(
-            @Parameter(description = "Texto a buscar en el nombre de las categorías", example = "bebida") @RequestParam String name) {
+            @Parameter(in = ParameterIn.QUERY, name = "name", description = "Texto a buscar en el nombre de las categorías", required = true, example = "bebida") @RequestParam String name) {
         List<CategorySimpleResponse> categories = categoryService.searchCategoriesByName(name);
         return ResponseEntity.ok(categories);
     }
