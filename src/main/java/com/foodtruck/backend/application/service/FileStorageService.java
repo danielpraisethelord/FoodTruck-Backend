@@ -69,6 +69,23 @@ public class FileStorageService {
     }
 
     /**
+     * Sube y optimiza una imagen de la promoción al bucket de Firebase.
+     *
+     * @param file          Imagen de la promoción.
+     * @param promotionName Nombre de la promoción (usado para nombrar el archivo).
+     * @return URL pública estable de la imagen subida.
+     * @throws InvalidProductImageException    Si el archivo no es una imagen
+     *                                         válida.
+     * @throws ProductImageTooLargeException   Si el archivo excede el tamaño máximo
+     *                                         permitido.
+     * @throws ProductImageProcessingException Si ocurre un error al procesar o
+     *                                         subir la imagen.
+     */
+    public String savePromotionImage(MultipartFile file, String promotionName) {
+        return uploadToFirebase(file, "promotions", promotionName);
+    }
+
+    /**
      * Elimina una imagen del bucket de Firebase Storage a partir de su URL pública.
      *
      * @param imageUrl URL pública de la imagen a eliminar.
