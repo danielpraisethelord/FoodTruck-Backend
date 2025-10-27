@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   foodtruck-backend:
-    image: devdaniel77/foodtruck.backend:s1
+    image: devdaniel77/foodtruck.backend:s2
     container_name: foodtruck-backend
     env_file:
       - .env
