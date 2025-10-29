@@ -3,8 +3,6 @@ package com.foodtruck.backend.domain.model;
 import java.math.BigDecimal;
 
 import com.foodtruck.backend.domain.types.OrderItemType;
-import com.google.auto.value.AutoValue.Builder;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -136,4 +136,39 @@ public class OrderDtos {
                         @Schema(description = "Mensaje de confirmación", example = "La orden ha sido cancelada exitosamente") String message,
                         @Schema(description = "Fecha y hora de cancelación", example = "2024-10-28T11:15:00") LocalDateTime cancelledAt) {
         }
+
+        @Schema(description = "DTO para filtrar órdenes por estado, rango de fechas y usuario")
+        public record OrderFilterRequest(
+                        @Schema(description = "Estado de la orden para filtrar", example = "PENDIENTE") OrderStatus status,
+
+                        @Schema(description = "Fecha de inicio del rango", example = "2024-10-01T00:00:00") LocalDateTime startDate,
+
+                        @Schema(description = "Fecha de fin del rango", example = "2024-10-31T23:59:59") LocalDateTime endDate,
+
+                        @Schema(description = "ID del usuario para filtrar", example = "1") Long userId) {
+        }
+
+        @Schema(description = "DTO con estadísticas generales de órdenes")
+        public record OrderStatisticsResponse(
+                        @Schema(description = "Total de órdenes registradas", example = "150") long totalOrders,
+
+                        @Schema(description = "Órdenes pendientes", example = "20") long pendingOrders,
+
+                        @Schema(description = "Órdenes completadas", example = "110") long completedOrders,
+
+                        @Schema(description = "Órdenes canceladas", example = "20") long cancelledOrders,
+
+                        @Schema(description = "Ingresos totales", example = "25000.00") BigDecimal totalRevenue) {
+        }
+
+        @Schema(description = "DTO para productos o promociones más vendidos")
+        public record TopSellingItemResponse(
+                        @Schema(description = "ID del producto o promoción", example = "5") Long id,
+
+                        @Schema(description = "Nombre del producto o promoción", example = "Taco de Pastor") String name,
+
+                        @Schema(description = "Cantidad total vendida", example = "120") long totalSold,
+
+                        @Schema(description = "Tipo de item: PRODUCT o PROMOTION", example = "PRODUCT") OrderItemType type) {
+        }
 }
