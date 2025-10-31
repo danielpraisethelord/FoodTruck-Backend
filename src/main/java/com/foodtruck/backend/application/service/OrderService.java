@@ -95,13 +95,16 @@ public class OrderService {
         // Validar que la orden no esté vacía
         validator.validateOrderNotEmpty(request.items().size());
 
-        // Eliminar items existentes
-        orderItemRepository.deleteByOrder(order);
+        // Eliminar items existentes correctamente
         order.getItems().clear();
 
         // Procesar nuevos items
         List<OrderItem> orderItems = processOrderItems(request.items(), order);
-        order.setItems(orderItems);
+        // Asegurar la relación bidireccional
+        for (OrderItem item : orderItems) {
+            item.setOrder(order);
+        }
+        order.getItems().addAll(orderItems);
 
         // Recalcular totales
         BigDecimal subtotal = calculateSubtotal(orderItems);
@@ -114,8 +117,6 @@ public class OrderService {
 
         // TODO: Notificar a todos los empleados (por WebSocket) que la orden fue
         // modificada por el usuario.
-        // Ejemplo: messagingTemplate.convertAndSend("/topic/orders/updates",
-        // mapper.toOrderDetailResponse(savedOrder));
 
         return mapper.toOrderDetailResponse(savedOrder);
     }

@@ -173,6 +173,9 @@ public class OrderController {
                 return ResponseEntity.ok(order);
         }
 
+        // Actualizar el tiempo, ya que los 5 minutos los toma desde que la orden se
+        // creo no desde que empezo a estar en preparación (habra que agregar un campo
+        // de tiempo de inicio de preparación luego)
         @Operation(summary = "Actualizar la propina de una orden", description = "Actualiza la propina de una orden. Solo el usuario dueño de la orden puede realizar esta acción y solo si la orden está PENDIENTE o en los primeros minutos de EN_PREPARACION.", security = @SecurityRequirement(name = "bearerAuth"), responses = {
                         @ApiResponse(responseCode = "200", description = "Propina actualizada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
                         @ApiResponse(responseCode = "400", description = "La orden no puede ser modificada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no modificable", value = """
@@ -236,8 +239,6 @@ public class OrderController {
                 OrderCancelledResponse response = orderService.cancelOrder(orderId, user.getId());
                 return ResponseEntity.ok(response);
         }
-
-        // Me quede revisando aquí
 
         // ========== CONSULTAS BÁSICAS ==========
 
@@ -397,6 +398,7 @@ public class OrderController {
                 return ResponseEntity.ok(statistics);
         }
 
+        // Verificar metodo ya que el servicio retorna 0 en todos los campos
         @Operation(summary = "Obtener estadísticas de órdenes por rango de fechas", description = "Obtiene estadísticas de órdenes dentro de un rango de fechas específico. Solo empleados y administradores.", security = @SecurityRequirement(name = "bearerAuth"), responses = {
                         @ApiResponse(responseCode = "200", description = "Estadísticas obtenidas correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderStatisticsResponse.class)))
         })
