@@ -130,21 +130,25 @@ public class OrderController {
                 return ResponseEntity.ok(order);
         }
 
-        @Operation(summary = "Actualizar el estado de una orden", description = "Actualiza el estado de una orden. Solo empleados y administradores pueden realizar esta acción.", security = @SecurityRequirement(name = "bearerAuth"), responses = {
-                        @ApiResponse(responseCode = "200", description = "Estado actualizado correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
-                        @ApiResponse(responseCode = "400", description = "Transición de estado inválida", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Transición inválida", value = """
-                                        {
-                                            "error": "INVALID_ORDER_STATUS_TRANSITION",
-                                            "message": "Una orden PENDIENTE solo puede pasar a EN_PREPARACION o CANCELADO"
-                                        }
-                                        """))),
-                        @ApiResponse(responseCode = "404", description = "Orden no encontrada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no encontrada", value = """
-                                        {
-                                            "error": "ORDER_NOT_FOUND",
-                                            "message": "Orden con id 123 no encontrada"
-                                        }
-                                        """)))
-        })
+        @Operation(summary = "Actualizar el estado de una orden", description = "Permite a empleados y administradores cambiar el estado de una orden. "
+                        +
+                        "Las transiciones válidas son: PENDIENTE → EN_PREPARACION/CANCELADO, " +
+                        "EN_PREPARACION → LISTO/CANCELADO, LISTO → ENTREGADO. " +
+                        "**Al cambiar el estado, se envía una notificación WebSocket al usuario dueño de la orden.**", security = @SecurityRequirement(name = "bearerAuth"), responses = {
+                                        @ApiResponse(responseCode = "200", description = "Estado actualizado correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
+                                        @ApiResponse(responseCode = "400", description = "Transición de estado inválida", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Transición inválida", value = """
+                                                        {
+                                                            "error": "INVALID_ORDER_STATUS_TRANSITION",
+                                                            "message": "Una orden PENDIENTE solo puede pasar a EN_PREPARACION o CANCELADO"
+                                                        }
+                                                        """))),
+                                        @ApiResponse(responseCode = "404", description = "Orden no encontrada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no encontrada", value = """
+                                                        {
+                                                            "error": "ORDER_NOT_FOUND",
+                                                            "message": "Orden con id 123 no encontrada"
+                                                        }
+                                                        """)))
+                        })
         @PatchMapping("/{orderId}/status")
         @PreAuthorize(ADMIN_OR_EMPLOYEE)
         public ResponseEntity<OrderDetailResponse> updateOrderStatus(
@@ -154,16 +158,19 @@ public class OrderController {
                 return ResponseEntity.ok(order);
         }
 
-        @Operation(summary = "Actualizar el tiempo estimado de una orden", description = "Actualiza el tiempo estimado de entrega de una orden. Solo empleados y administradores pueden realizar esta acción.", security = @SecurityRequirement(name = "bearerAuth"), responses = {
-                        @ApiResponse(responseCode = "200", description = "Tiempo estimado actualizado correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
-                        @ApiResponse(responseCode = "400", description = "Formato de tiempo inválido", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Formato inválido", value = """
-                                        {
-                                            "error": "INVALID_ESTIMATED_TIME",
-                                            "message": "El tiempo estimado debe tener el formato MM:SS"
-                                        }
-                                        """))),
-                        @ApiResponse(responseCode = "404", description = "Orden no encontrada")
-        })
+        @Operation(summary = "Actualizar el tiempo estimado de una orden", description = "Permite a empleados y administradores actualizar el tiempo estimado de preparación de una orden. "
+                        +
+                        "El formato debe ser HH:MM (por ejemplo, '00:30' para 30 minutos). " +
+                        "**Al actualizar el tiempo, se envía una notificación WebSocket al usuario dueño de la orden.**", security = @SecurityRequirement(name = "bearerAuth"), responses = {
+                                        @ApiResponse(responseCode = "200", description = "Tiempo estimado actualizado correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
+                                        @ApiResponse(responseCode = "400", description = "Formato de tiempo inválido", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Formato inválido", value = """
+                                                        {
+                                                            "error": "INVALID_ESTIMATED_TIME",
+                                                            "message": "El tiempo estimado debe tener el formato MM:SS"
+                                                        }
+                                                        """))),
+                                        @ApiResponse(responseCode = "404", description = "Orden no encontrada")
+                        })
         @PatchMapping("/{orderId}/estimated-time")
         @PreAuthorize(ADMIN_OR_EMPLOYEE)
         public ResponseEntity<OrderDetailResponse> updateOrderEstimatedTime(
@@ -176,27 +183,31 @@ public class OrderController {
         // Actualizar el tiempo, ya que los 5 minutos los toma desde que la orden se
         // creo no desde que empezo a estar en preparación (habra que agregar un campo
         // de tiempo de inicio de preparación luego)
-        @Operation(summary = "Actualizar la propina de una orden", description = "Actualiza la propina de una orden. Solo el usuario dueño de la orden puede realizar esta acción y solo si la orden está PENDIENTE o en los primeros minutos de EN_PREPARACION.", security = @SecurityRequirement(name = "bearerAuth"), responses = {
-                        @ApiResponse(responseCode = "200", description = "Propina actualizada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
-                        @ApiResponse(responseCode = "400", description = "La orden no puede ser modificada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no modificable", value = """
-                                        {
-                                            "error": "ORDER_CANNOT_BE_MODIFIED",
-                                            "message": "No se puede modificar la orden después de 5 minutos de estar en preparación"
-                                        }
-                                        """))),
-                        @ApiResponse(responseCode = "403", description = "Sin permisos para modificar esta orden", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Acceso denegado", value = """
-                                        {
-                                            "error": "ORDER_ACCESS_DENIED",
-                                            "message": "No tienes permiso para acceder a esta orden"
-                                        }
-                                        """))),
-                        @ApiResponse(responseCode = "404", description = "Orden no encontrada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no encontrada", value = """
-                                        {
-                                            "error": "ORDER_NOT_FOUND",
-                                            "message": "Orden con id 123 no encontrada"
-                                        }
-                                        """)))
-        })
+        @Operation(summary = "Actualizar la propina de una orden", description = "Permite al usuario actualizar completamente una orden existente (productos, cantidades, propina). "
+                        +
+                        "Solo se puede actualizar si está en estado PENDIENTE o en los primeros minutos de EN_PREPARACION. "
+                        +
+                        "**Al actualizar, se envía una notificación WebSocket a todos los empleados.**", security = @SecurityRequirement(name = "bearerAuth"), responses = {
+                                        @ApiResponse(responseCode = "200", description = "Propina actualizada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDetailResponse.class))),
+                                        @ApiResponse(responseCode = "400", description = "La orden no puede ser modificada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no modificable", value = """
+                                                        {
+                                                            "error": "ORDER_CANNOT_BE_MODIFIED",
+                                                            "message": "No se puede modificar la orden después de 5 minutos de estar en preparación"
+                                                        }
+                                                        """))),
+                                        @ApiResponse(responseCode = "403", description = "Sin permisos para modificar esta orden", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Acceso denegado", value = """
+                                                        {
+                                                            "error": "ORDER_ACCESS_DENIED",
+                                                            "message": "No tienes permiso para acceder a esta orden"
+                                                        }
+                                                        """))),
+                                        @ApiResponse(responseCode = "404", description = "Orden no encontrada", content = @Content(mediaType = "application/json", examples = @ExampleObject(name = "Orden no encontrada", value = """
+                                                        {
+                                                            "error": "ORDER_NOT_FOUND",
+                                                            "message": "Orden con id 123 no encontrada"
+                                                        }
+                                                        """)))
+                        })
         @PatchMapping("/{orderId}/tip")
         @PreAuthorize(AUTHENTICATED)
         public ResponseEntity<OrderDetailResponse> updateOrderTip(
