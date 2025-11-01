@@ -43,6 +43,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final OrderValidator validator;
     private final OrderMapper mapper;
+    private final OrderNotificationService notificationService;
 
     /**
      * Crea una nueva orden para un usuario.
@@ -76,8 +77,11 @@ public class OrderService {
 
         // Persistir
         Order savedOrder = orderRepository.save(order);
+        OrderDetailResponse response = mapper.toOrderDetailResponse(savedOrder);
 
-        return mapper.toOrderDetailResponse(savedOrder);
+        notificationService.notifyOrderCreatedByUser(response);
+
+        return response;
     }
 
     /**
@@ -114,16 +118,15 @@ public class OrderService {
 
         // Persistir
         Order savedOrder = orderRepository.save(order);
+        OrderDetailResponse response = mapper.toOrderDetailResponse(savedOrder);
 
-        // TODO: Notificar a todos los empleados (por WebSocket) que la orden fue
-        // modificada por el usuario.
+        notificationService.notifyOrderUpdatedByUser(response);
 
-        return mapper.toOrderDetailResponse(savedOrder);
+        return response;
     }
 
     /**
      * Actualiza el estado de una orden.
-     * TODO: Implementar notificación por WebSocket cuando el estado cambie
      */
     public OrderDetailResponse updateOrderStatus(Long orderId, UpdateOrderStatusRequest request) {
         Order order = findOrderByIdWithItems(orderId);
@@ -145,17 +148,15 @@ public class OrderService {
         }
 
         Order savedOrder = orderRepository.save(order);
+        OrderDetailResponse response = mapper.toOrderDetailResponse(savedOrder);
 
-        // TODO: Enviar notificación WebSocket sobre el cambio de estado
-        // messagingTemplate.convertAndSend("/topic/orders/" + orderId,
-        // mapper.toOrderDetailResponse(savedOrder));
+        notificationService.notifyOrderStatusChanged(response);
 
-        return mapper.toOrderDetailResponse(savedOrder);
+        return response;
     }
 
     /**
      * Actualiza el tiempo estimado de una orden.
-     * TODO: Implementar notificación por WebSocket cuando el tiempo estimado cambie
      */
     public OrderDetailResponse updateOrderEstimatedTime(Long orderId, UpdateOrderEstimatedTimeRequest request) {
         Order order = findOrderById(orderId);
@@ -167,12 +168,11 @@ public class OrderService {
         order.setEstimatedTime(request.estimatedTime());
 
         Order savedOrder = orderRepository.save(order);
+        OrderDetailResponse response = mapper.toOrderDetailResponse(savedOrder);
 
-        // TODO: Enviar notificación WebSocket sobre el cambio de tiempo estimado
-        // messagingTemplate.convertAndSend("/topic/orders/" + orderId,
-        // mapper.toOrderDetailResponse(savedOrder));
+        notificationService.notifyOrderEstimatedTimeChanged(response);
 
-        return mapper.toOrderDetailResponse(savedOrder);
+        return response;
     }
 
     /**
